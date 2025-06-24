@@ -11,13 +11,13 @@ AFA uses a learned LTI dynamics model to propagate latent states before computin
 predicted latent state (from the key, evolved to the query’s time point) to the query. The attention weights are then computed as a function of 
 how consistent the transition is under the learned dynamics, effectively filtering out observations that do not align with plausible state evolution.
 
-This framework introduces: \\
-- Treating inputs as latent states within a learned autonomous dynamical system rather than fixed exogenous signals. \\
-- Propagating keys forward through system dynamics before computing similarity, aligning attention with temporal evolution. \\
-- Efficient linear dynamics computation via matrix exponentials and diagonalization. \\
-- Precision-weighted maximum likelihood estimation combining evolved past measurements with analytically computed covariances. \\
-- Adaptive reweighting of precision matrices using residual-based Mahalanobis distances to correct for model error. \\
-- Replacing softmax with a robust, uncertainty-aware weighting scheme akin to an M-estimator. \\
+This framework introduces:
+- Treating inputs as latent states within a learned autonomous dynamical system rather than fixed exogenous signals.
+- Propagating keys forward through system dynamics before computing similarity, aligning attention with temporal evolution.
+- Efficient linear dynamics computation via matrix exponentials and diagonalization.
+- Precision-weighted maximum likelihood estimation combining evolved past measurements with analytically computed covariances.
+- Adaptive reweighting of precision matrices using residual-based Mahalanobis distances to correct for model error.
+- Replacing softmax with a robust, uncertainty-aware weighting scheme akin to an M-estimator.
 - Joint latent state estimation and prediction ensuring attention weights reflect confidence-consistent similarities.
 
 ## Repository Structure
