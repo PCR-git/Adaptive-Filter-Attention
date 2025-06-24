@@ -18,6 +18,7 @@ This structure introduces:
 
 ## Repository Structure
 
+```
 adaptive_filter_attention/
 │
 ├── utils/                     # Complex-valued tensor utilities
@@ -32,3 +33,4 @@ adaptive_filter_attention/
 ├── training/                 # Training utilities and loops
 │
 └── visualization/            # Tools to visualize attention and predictions
+```
