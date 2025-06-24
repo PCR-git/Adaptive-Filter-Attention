@@ -1,7 +1,7 @@
 # Adaptive Filter Attention (AFA)
 
 Adaptive Filter Attention (AFA) is a novel attention mechanism designed for filtering and forecasting in stochastic dynamical systems. Unlike standard attention mechanisms,
-AFA integrates an explicit, learnable linear time-invariant (LTI) dynamics model into the attention computation, enabling it to filter noise and infer latent state transitions more robustly.
+AFA integrates an explicit, learnable linear time-invariant (LTI) dynamics model into the attention computation, allowing it to more robustly filter noise and infer latent state transitions.
 
 ---
 
@@ -11,10 +11,16 @@ AFA uses a learned LTI dynamics model to propagate latent states before computin
 predicted latent state (from the key, evolved to the query’s time point) to the query. The attention weights are then computed as a function of 
 how consistent the transition is under the learned dynamics, effectively filtering out observations that do not align with plausible state evolution.
 
-This structure introduces:
-- Time-decayed attention with complex-valued exponential weights,
-- Precision-aware weighting using stochastic noise models,
-- Joint filtering and forecasting capabilities.
+This framework introduces:
+\begin{itemize}
+  \item Treating inputs as latent states within a learned autonomous dynamical system rather than fixed exogenous signals.
+  \item Propagating keys forward through system dynamics before computing similarity, aligning attention with temporal evolution.
+  \item Efficient linear dynamics computation via matrix exponentials and diagonalization.
+  \item Precision-weighted maximum likelihood estimation combining evolved past measurements with analytically computed covariances.
+  \item Adaptive reweighting of precision matrices using residual-based Mahalanobis distances to correct for model error.
+  \item Replacing softmax with a robust, uncertainty-aware weighting scheme akin to an M-estimator.
+  \item Joint latent state estimation and prediction ensuring attention weights reflect confidence-consistent similarities.
+\end{itemize}
 
 ## Repository Structure
 
