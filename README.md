@@ -21,7 +21,7 @@ This structure introduces:
 ```
 adaptive_filter_attention/
 │
-├── utils/                     # Complex-valued tensor utilities
+├── utils/                    # Complex-valued tensor utilities
 │
 ├── dynamics/                 # Tools for simulating dynamical systems for testing
 │
