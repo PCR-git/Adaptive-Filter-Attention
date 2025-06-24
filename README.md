@@ -12,9 +12,9 @@ predicted latent state (from the key, evolved to the query’s time point) to th
 how consistent the transition is under the learned dynamics, effectively filtering out observations that do not align with plausible state evolution.
 
 This framework introduces:
-\begin{itemize}
-  \item Treating inputs as latent states within a learned autonomous dynamical system rather than fixed exogenous signals.
-  \item Propagating keys forward through system dynamics before computing similarity, aligning attention with temporal evolution.
+
+- Treating inputs as latent states within a learned autonomous dynamical system rather than fixed exogenous signals. \\
+- Propagating keys forward through system dynamics before computing similarity, aligning attention with temporal evolution. \\
   \item Efficient linear dynamics computation via matrix exponentials and diagonalization.
   \item Precision-weighted maximum likelihood estimation combining evolved past measurements with analytically computed covariances.
   \item Adaptive reweighting of precision matrices using residual-based Mahalanobis distances to correct for model error.
