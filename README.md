@@ -38,3 +38,5 @@ adaptive_filter_attention/
 │
 └── visualization/            # Tools to visualize attention and predictions
 ```
+
+Also includes: Animations of predicted trajectories and attention matrices during training, for a simple 2D ODE
