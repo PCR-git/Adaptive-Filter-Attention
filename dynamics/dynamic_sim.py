@@ -6,6 +6,37 @@ import torch
 
 # Dynamic simulation for linear time invariant system
 
+# def stochastic_LTI(A, x0, N_t, args, sigma_process=1, sigma_process_0=0, sigma_measure=1):
+#     """
+#     Simulates a linear time-invariant system with zero-mean Gaussian noise using Euler integration.
+#     """
+#     m = args.m
+#     dt = args.dt
+#     device = args.device
+
+#     # Precompute noise
+#     process_noise = sigma_process * torch.randn((N_t, m, 1), device=device)
+#     measurement_noise = sigma_measure * torch.randn((N_t, m, 1), device=device)
+
+#     # Allocate trajectory array
+#     X = torch.zeros((N_t, m, 1), device=device)
+
+#     # Initial condition with optional initial process noise
+# #     x = x0 + sigma_process_0 * torch.randn((m, 1), device=device)
+#     x = x0
+#     X[0] = x  # Store initial state as first timestep
+
+#     # Simulate over time (start from t = 1)
+#     for t in range(1, N_t):
+#         xp = torch.matmul(A, x) # Compute velocity
+#         x = x + xp * dt # Euler integration
+#         x += process_noise[t] * np.sqrt(dt) # Add process noise
+#         X[t] = x # Append current state to array
+
+#     X_measure = X + measurement_noise # Add measuremnt noise
+        
+#     return X, X_measure
+
 def stochastic_LTI(A, x0, N_t, args, sigma_process=1, sigma_process_0=0, sigma_measure=1):
     """
     Simulates a linear time-invariant system with zero-mean Gaussian noise using Euler integration.
@@ -15,18 +46,19 @@ def stochastic_LTI(A, x0, N_t, args, sigma_process=1, sigma_process_0=0, sigma_m
     device = args.device
 
     # Precompute noise
-    process_noise = sigma_process * torch.randn((N_t, m, 1), device=device)
-    measurement_noise = sigma_measure * torch.randn((N_t, m, 1), device=device)
+    process_noise = sigma_process * torch.randn((N_t+1, m, 1), device=device)
+    measurement_noise = sigma_measure * torch.randn((N_t+1, m, 1), device=device)
 
     # Allocate trajectory array
-    X = torch.zeros((N_t, m, 1), device=device)
+    X = torch.zeros((N_t+1, m, 1), device=device)
 
     # Initial condition with optional initial process noise
-    x = x0 + sigma_process_0 * torch.randn((m, 1), device=device)
+#     x = x0 + sigma_process_0 * torch.randn((m, 1), device=device)
+    x = x0
     X[0] = x  # Store initial state as first timestep
 
     # Simulate over time (start from t = 1)
-    for t in range(1, N_t):
+    for t in range(1, N_t+1):
         xp = torch.matmul(A, x) # Compute velocity
         x = x + xp * dt # Euler integration
         x += process_noise[t] * np.sqrt(dt) # Add process noise

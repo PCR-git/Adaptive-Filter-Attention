@@ -4,6 +4,15 @@ import torch
 ###############################################
 ###############################################
 
+def to_complex(real_mat):
+    """
+    Function to split a real-valued matrix into (real, imag) complex components
+    """
+    return (real_mat.clone(), torch.zeros_like(real_mat))
+
+###############################################
+###############################################
+
 def complex_conj_transpose(M):
     """
     Computes complex conjugate transpose
@@ -40,7 +49,16 @@ def complex_exp(D):
     """
     Computes exponential for complex valued vectors
     """
-    return torch.exp(D[0])*torch.stack((torch.cos(D[1]), torch.sin(D[1])))
+    return torch.exp(D[0]) * torch.stack((torch.cos(D[1]), torch.sin(D[1])))
+
+###############################################
+###############################################
+
+def complex_angles(theta):
+    """
+    Compute e^i theta
+    """
+    return torch.stack((torch.cos(theta), torch.sin(theta)))
 
 ###############################################
 ###############################################
@@ -167,7 +185,7 @@ def batched_complex_hadamard_full(A, B):
     """
     Batched Hadamard product for complex tensors.
     """
-    # A: (S, 2, N, M)
+    # A: (B, S, 2, N, M)
     # B: (B, S, 2, N, M)
     A_real, A_imag = A[:, 0], A[:, 1] # Get real and imaginary parts of first matrix
     B_real, B_imag = B[:, 0], B[:, 1] # Get real and imaginary parts of second matrix
@@ -184,7 +202,7 @@ def batched_complex_matmul_full(A, B):
     """
     Batched complex matrix multiplication for tensors representing complex numbers.
     """
-    # A: (S, 2, N, M)
+    # A: (B, S, 2, N, M)
     # B: (B, S, 2, N, M)
     
     A_real, A_imag = A[:, 0], A[:, 1] # Get real and imaginary parts of first matrix
@@ -195,3 +213,25 @@ def batched_complex_matmul_full(A, B):
 
     return torch.stack([real_part, imag_part], dim=1)
 
+###############################################
+###############################################
+
+def batched_complex_matmul_multihead(A, B):
+    """
+    General batched complex matrix multiplication with head dimension.
+
+    A: [B, 2, M1, M2, H]
+    B: [B, 2, M2, M3, H]
+    Returns:
+        [B, 2, M1, M3, H]
+    """
+    A_re, A_im = A[:, 0], A[:, 1]  # [B, M1, M2, H]
+    B_re, B_im = B[:, 0], B[:, 1]  # [B, M2, M3, H]
+
+    real = torch.einsum('b i j h, b j k h -> b i k h', A_re, B_re) \
+         - torch.einsum('b i j h, b j k h -> b i k h', A_im, B_im)
+    
+    imag = torch.einsum('b i j h, b j k h -> b i k h', A_re, B_im) \
+         + torch.einsum('b i j h, b j k h -> b i k h', A_im, B_re)
+
+    return torch.stack([real, imag], dim=1)  # [B, 2, M1, M3, H]
