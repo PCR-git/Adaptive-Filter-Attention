@@ -1,0 +1,2 @@
+from .simplified_precision_utils import get_safe_exp_tot, compute_covariance_matrix, compute_covariance_matrix_safe
+from .simplified_precision_utils import compute_exp_kernel_isotropic, compute_residual_norm_isotropic

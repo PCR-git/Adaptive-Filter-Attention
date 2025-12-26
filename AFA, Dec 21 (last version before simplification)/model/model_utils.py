@@ -1,7 +1,6 @@
 import numpy as np
 import torch
 import torch.nn.functional as F
-from utils import apply_interleaved_rope
 
 ##########################################################################################
 ##########################################################################################
@@ -19,31 +18,43 @@ def compute_lambda(lambda_real_input, lambda_imag_input, args, scale_c=10, scale
     """
     
     device = lambda_real_input.device
-
+    
+#     scale_r = scale_c / (2*args.tf) # Normalize by time interval
+#     scale_i = scale_c * 2*np.pi / (2*args.tf) # Normalize by time interval
     scale_r = scale_c / (2*args.seq_len) # Normalize by sequence length
     scale_i = scale_c * 2*np.pi / (2*args.seq_len) # Normalize by sequence length
 
     n_heads, d_half = lambda_imag_input.shape
+    d_v_head = 2 * d_half
 
     # Compute bounded decay rate for real part
+#     if args.allow_unstable_eigenvals == 0:
+#         lambda_real = (torch.sigmoid(lambda_real_input) - 1.0) * scale_r - epsilon # Bounded above and below
+#     else:
+#         lambda_real = (torch.sigmoid(lambda_real_input) - 0.9) * scale_r # Allow positive values
+#         print('Allowing unstable eigenvalues (real(lambda) > 0)')
+#     lambda_real = -F.softplus(-lambda_real_input) * scale_r - epsilon # Bounded above; Unbounded below
     lambda_real = (torch.sigmoid(lambda_real_input) - 1.0) * scale_r - epsilon # Bounded above and below
 
     if args.lambda_real_zero == 1:
         lambda_real = lambda_real*0    
-
-    imag_parts = torch.stack([lambda_imag_input, -lambda_imag_input], dim=-1) * scale_i  
-    imag_parts = imag_parts.reshape(n_heads, 2 * d_half)
-
+    
     # Expand real parts to match imag
-    lambda_real_expanded = lambda_real.unsqueeze(-1).expand(-1, d_half)
-
+    lambda_real_expanded = lambda_real.expand(d_half, -1)  # [d_half, n_heads]
+#     if args.isotropic_afa == 1:
+#         lambda_real_expanded = lambda_real.expand(d_half, -1)  # [d_half, n_heads]
+#     else:
+#         lambda_real_expanded = lambda_real.permute(1,0)
+        
     # Create interleaved real/imag conjugate pairs
-    real_parts = lambda_real_expanded.repeat_interleave(2, dim=1)
+    real_parts = lambda_real_expanded.repeat_interleave(2, dim=0)                # [d_v_head, n_heads]
+    imag_parts = torch.stack([lambda_imag_input, -lambda_imag_input], dim=2) * scale_i   # [d_half, 2, n_heads]
+    imag_parts = imag_parts.reshape(n_heads, d_v_head).T                          # interleave imag/-imag
 
-    # Stack real and imag into single vector
-    lambda_h = torch.stack([real_parts.T, imag_parts.T], dim=0).unsqueeze(1).unsqueeze(-1)
+    # Stack real and imag into shape [2, d_v_head, n_heads, 1]
+    lambda_h = torch.stack([real_parts, imag_parts], dim=0).unsqueeze(1).unsqueeze(-1)  # [2, 1, d_v_head, n_heads, 1]
 
-    return lambda_real, imag_parts, lambda_h
+    return lambda_h
 
 ##########################################################################################
 ##########################################################################################
@@ -91,26 +102,3 @@ def resolve_multihead_dims(n_heads, query_key_dim=None, value_dim=None, query_ke
         value_dim = value_dim_total // n_heads
 
     return query_key_dim, value_dim, query_key_dim_total, value_dim_total
-
-##########################################################################################
-##########################################################################################
-
-def compute_pulled_forward_estimates(self, V_tilde, cos_v, sin_v, E_rel_v):
-
-    # Apply the rotation to V_tilde
-    cos_v_all = cos_v.unsqueeze(1).unsqueeze(0)
-    sin_v_all = sin_v.unsqueeze(1).unsqueeze(0)
-    rotated_V = apply_interleaved_rope(V_tilde.unsqueeze(1), cos_v_all, sin_v_all)
-
-    # Apply the real-valued scaling (E_rel_v)
-    Z_ij_hat_all_multihead = E_rel_v.unsqueeze(-1).unsqueeze(-1) * rotated_V
-
-    Z = Z_ij_hat_all_multihead.permute(0,1,2,5,3,4).contiguous() # Move complex dim
-    Z_ij_hat_all = Z.view(*Z.size()[:-2], -1) # Stack heads
-
-    Z_ij_hat_causal = Z_ij_hat_all * self.causal_mask.unsqueeze(-1) # Apply causal mask
-    Z_ij_hat_causal = Z_ij_hat_causal.view(*Z_ij_hat_causal.size()[:-2], -1) # Stack real/imaginary partys
-
-    x_hat = self.W_o(Z_ij_hat_causal).unsqueeze(-1) # Prediction in original basis
-
-    return x_hat

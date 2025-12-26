@@ -7,8 +7,8 @@ import matplotlib.cm as cm
 plt.rcParams['figure.figsize'] = [10, 10]
 plt.rc('font', size=20)
 
-from utils import complex_matmul
-
+from utils import complex_matmul, batched_complex_matmul
+# from model import get_complex_weights
 from model import ComplexLinearLayer, AFATransformerBlock
 from model import AFA_1layer, AFATransformerNetwork
 from model import MultiheadIsotropicAFA
@@ -92,6 +92,7 @@ def plot_state_matrix(A,marker,size=32,color=None):
             plt.scatter(range(4),A_real, c=color, marker=marker,s=size)
             plt.scatter(range(4),A_imag, c=color, marker=marker,s=size)
 
+
 ##########################################################################################
 ##########################################################################################
 
@@ -165,6 +166,8 @@ def visualize_results(model, train_dataset, all_losses, mean_epoch_losses, log_m
         lambda_h = output_dict['epoch_lambdas']
         unnormalized_attention = output_dict['unnormalized_attention']
         
+        x_hat = torch.stack((x_hat, torch.zeros_like(x_hat)),dim=1) # Add zero imaginary part
+
         est = est.unsqueeze(-1)
         out = out.unsqueeze(1).unsqueeze(-1)
         
@@ -195,38 +198,31 @@ def visualize_results(model, train_dataset, all_losses, mean_epoch_losses, log_m
         plt.show()
     
         #########################################
-        
-        if args.compute_pulled_forward_estimates:
             
-            x_hat = torch.stack((x_hat, torch.zeros_like(x_hat)),dim=1) # Add zero imaginary part
-            
-            # Plot state estimates at n_example data points
-    #           fig, ax = plt.subplots(figsize=(dim, dim))
+        # Plot state estimates at n_example data points
+#           fig, ax = plt.subplots(figsize=(dim, dim))
 
-            plot_trajectory(X_true[:-args.n].unsqueeze(0),0*X_measure[1:].unsqueeze(0),0*X_est) # Plot actual trajectory
+        plot_trajectory(X_true[:-args.n].unsqueeze(0),0*X_measure[1:].unsqueeze(0),0*X_est) # Plot actual trajectory
 
-            Xo_h = torch.matmul(R1i,x_hat) # Reverse random mapping
-            Xo = torch.matmul(Pd,Xo_h).detach().cpu()[0,0].squeeze() # State estimates
-            markers = ['o', 'v', 's', 'd', 'P']
-            colors = ['pink', 'red', 'black', 'yellow', 'blue']
-            mi = 0
-            for i in range(args.seq_len):
-                if np.mod(i,int((args.seq_len)/args.n_example)) == 0 and i > 0:
-                    xi = Xo[i,i,:]
-                    x_est = Xo[i,0:i+1,:].numpy()
-                    plt.scatter(x_est.T[0],x_est.T[1], s=10, marker=markers[np.mod(mi,len(markers))], color=colors[np.mod(mi,len(colors))])
-                    plt.scatter(xi[0],xi[1], s=100, marker='x', color=colors[np.mod(mi,len(colors))])
-                    mi += 1
+        Xo_h = torch.matmul(R1i,x_hat) # Reverse random mapping
+        Xo = torch.matmul(Pd,Xo_h).detach().cpu()[0,0].squeeze() # State estimates
+        markers = ['o', 'v', 's', 'd', 'P']
+        colors = ['pink', 'red', 'black', 'yellow', 'blue']
+        mi = 0
+        for i in range(args.seq_len):
+            if np.mod(i,int((args.seq_len)/args.n_example)) == 0 and i > 0:
+                xi = Xo[i,i,:]
+                x_est = Xo[i,0:i+1,:].numpy()
+                plt.scatter(x_est.T[0],x_est.T[1], s=10, marker=markers[np.mod(mi,len(markers))], color=colors[np.mod(mi,len(colors))])
+                plt.scatter(xi[0],xi[1], s=100, marker='x', color=colors[np.mod(mi,len(colors))])
+                mi += 1
 
-            plt.xlim(x_min-margin, x_max+margin)
-            plt.ylim(y_min-margin, y_max+margin)
+        plt.xlim(x_min-margin, x_max+margin)
+        plt.ylim(y_min-margin, y_max+margin)
 
-            plt.title('State Estimates')
-    #           plt.savefig(folder + 'ests//' + str(epoch) + '.png', bbox_inches='tight')
-            plt.show()
-        
-        else:
-            pass
+        plt.title('State Estimates')
+#           plt.savefig(folder + 'ests//' + str(epoch) + '.png', bbox_inches='tight')
+        plt.show()
     
         #########################################
         

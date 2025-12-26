@@ -5,6 +5,7 @@ import torch.nn.functional as F
 from matplotlib import pyplot as plt
 import math
 
+from utils import complex_exp, batched_complex_matmul, batched_complex_hadamard, batched_complex_matmul_full
 from model import init_complexlinear, init_complex_matrix
 from model import RoPE
 

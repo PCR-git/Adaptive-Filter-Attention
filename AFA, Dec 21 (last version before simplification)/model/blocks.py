@@ -2,9 +2,11 @@ import numpy as np
 import torch
 import torch.nn as nn
 
+# from model import ModReLU
 from model import resolve_multihead_dims
 from model import init_complexlinear, init_complex_matrix
 from model import ComplexLinearLayer, MultiHeadAttentionLayer
+# from model import MultiHeadComplexAttentionLayer
 from model import ComplexRMSNorm, MultiheadIsotropicAFA
 
 ##########################################################################################
@@ -231,13 +233,12 @@ class AFATransformerBlock(nn.Module):
         # Self-attention with residual connection
         attn_out, output_dict = self.attn(x_norm, x_norm, x_norm, t_measure)
 
-        if self.args.use_complex_output_norm == 0:
+        if self.args.use_inner_residual_and_norm == 0:
             x = x + attn_out
             x_norm = self.norm2(x)
         else:
-#             x = output_dict['est_latent']
-#             x_norm = attn_out
-            print('Error: this part of the code is incomplete.')
+            x = output_dict['est_latent']
+            x_norm = attn_out
             
         ffn_out = self.ffn(x_norm) # Feedforward network with residual connection
         out = x + ffn_out  # Residual connection
