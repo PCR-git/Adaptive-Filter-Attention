@@ -29,8 +29,7 @@ adaptive_filter_attention/
 │
 ├── dynamics/                 # Tools for simulating dynamical systems for testing
 │
-├── precision_attention/      # Core of AFA computations, including residuals, estimates, and propagated precision matrices
-|                               estimates, and propagated precision matrices
+├── isotropic_afa/            # Core of AFA computations, including covariance matrix and residual norm
 │
 ├── model/                    # Neural network components
 │
